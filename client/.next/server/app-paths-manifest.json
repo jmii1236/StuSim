@@ -1,5 +1,0 @@
-{
-  "/_not-found/page": "app/_not-found/page.js",
-  "/session/active/page": "app/session/active/page.js",
-  "/session/feedback/[id]/page": "app/session/feedback/[id]/page.js"
-}
