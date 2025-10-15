@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Mic, MicOff, Video, VideoOff, PhoneOff } from "lucide-react"
 import { createClient, LiveTranscriptionEvents } from "@deepgram/sdk"
+import { useSearchParams } from 'next/navigation';
+import getAIResponse from '../../../services/aiCalls.js';
 
 type TranscriptMessage = {
   id: number
@@ -15,16 +17,25 @@ type TranscriptMessage = {
   timestamp: string
 }
 
+type StudentParameters = {
+    csBackground: string,
+    personality: string,
+    difficulty: string,
+    issue: string
+}
+
 export default function ActiveSessionPage() {
   const [micOn, setMicOn] = useState(false)  // Start with mic on?
   const [videoOn, setVideoOn] = useState(true)
   const [elapsedTime, setElapsedTime] = useState(0)
   const [transcript, setTranscript] = useState<TranscriptMessage[]>([])
+  const [lastUserMsg, setLastUserMsg] = useState<string>("");
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const connectionRef = useRef<any>(null)
   const transcriptEndRef = useRef<HTMLDivElement>(null)
   const elapsedTimeRef = useRef(0)
+  const studentParamsRef = useRef<StudentParameters>(null);
 
 
   const [code, setCode] = useState(`def fibonacci(n):
@@ -34,6 +45,7 @@ export default function ActiveSessionPage() {
 
 # Student is trying to understand recursion
 print(fibonacci(5))`)
+
 
   // Timer
   useEffect(() => {
@@ -46,6 +58,39 @@ print(fibonacci(5))`)
     }, 1000)
     return () => clearInterval(interval)
   }, [])
+  
+  //Add given params to ref
+  const queryParams = useSearchParams();
+
+  useEffect(() => {
+    studentParamsRef.current = {
+      csBackground: queryParams.get('csBackground') ?? "Error, tell user",
+      personality: queryParams.get('personality') ?? "Error, tell user",
+      difficulty: queryParams.get('difficulty') ?? "Error, tell user",
+      issue: queryParams.get('issue') ?? "Error, tell user"
+      }
+  }, [])
+
+
+
+  useEffect(() => {
+    if(transcript.length !== 0 && transcript[transcript.length-1].text !== "" && studentParamsRef.current) {
+      console.log(transcript);
+      getAIResponse(transcript, studentParamsRef.current).then(response => {
+        console.log("response: ", response);
+        setTranscript((prev) => [...prev, {
+            id: Date.now(),
+            speaker: 'student',
+            text: response as string,
+            timestamp: formatTime(elapsedTimeRef.current),
+        }
+      ])
+      }).catch(error => {
+        console.error("Error found: ", error);
+      })
+
+    }
+  }, [lastUserMsg]);
 
   // // Auto-scroll transcript
   // useEffect(() => {
@@ -66,12 +111,12 @@ print(fibonacci(5))`)
       }
 
       const deepgram = createClient(process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY)
-      const connection = deepgram.listen.live({ model: 'nova-2', smart_format: true })
+      const connection = deepgram.listen.live({ model: 'nova-2', smart_format: true, interim_results: true, endpointing: 0,utterance_end_ms: 1000})
       connectionRef.current = connection
 
       // for when Deepgram sends back transcription
       connection.on(LiveTranscriptionEvents.Transcript, (data: any) => {
-        console.log('Transcription started')
+        console.log('Transcription started: ', data);
         const text = data.channel.alternatives[0].transcript
         if (text && data.is_final) {
           setTranscript((prev) => [...prev, {
@@ -80,6 +125,8 @@ print(fibonacci(5))`)
             text,
             timestamp: formatTime(elapsedTimeRef.current),
           }])
+          
+          setLastUserMsg(text);
           // console.log('Transcript:', text) // For debugging
           // console.log('Elapsed Time:', elapsedTimeRef.current) // For debugging
         }
@@ -90,9 +137,9 @@ print(fibonacci(5))`)
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) connection.send(event.data)
       }
-      mediaRecorder.start(250)
+      mediaRecorder.start(1000)
       mediaRecorderRef.current = mediaRecorder
-      
+
     } catch (error) {
       console.error('Mic error:', error)
       alert('Please allow microphone access')
@@ -110,6 +157,7 @@ print(fibonacci(5))`)
   const toggleMic = () => {
     if (!micOn) {
       startTranscription()
+      
       console.log('Mic On')
     } else {
       stopTranscription()
@@ -187,7 +235,7 @@ print(fibonacci(5))`)
                       <div key={message.id} className="space-y-1">
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-semibold text-accent">
-                            Tutor
+                            {message.speaker.charAt(0).toUpperCase() + message.speaker.slice(1)}
                           </span>
                           <span className="text-xs text-muted-foreground">{message.timestamp}</span>
                         </div>

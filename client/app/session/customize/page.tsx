@@ -107,7 +107,7 @@ export default function CustomizeSessionPage() {
             </div>
 
             <Button className="w-full" size="lg" asChild>
-              <Link href="/session/active">Start Session</Link>
+              <Link href={{pathname: "/session/active", query: {csBackground: csBackground, personality: personality, difficulty: difficulty, issue: issue}}}>Start Session</Link>
             </Button>
           </CardContent>
         </Card>
