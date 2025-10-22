@@ -7,6 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Mic, MicOff, Video, VideoOff, PhoneOff } from "lucide-react"
 import { useSearchParams } from 'next/navigation';
+import { createWriteStream } from "fs";
+import { Readable } from "stream";
+import { finished } from "stream/promises";
 import getAIResponse from '../../../services/aiCalls.js';
 
 type TranscriptMessage = {
@@ -60,9 +63,9 @@ print(fibonacci(5))`)
     return () => clearInterval(interval)
   }, [])
   
+  
   //Add given params to ref
   const queryParams = useSearchParams();
-
   useEffect(() => {
     studentParamsRef.current = {
       csBackground: queryParams.get('csBackground') ?? "Error, tell user",
@@ -76,7 +79,7 @@ print(fibonacci(5))`)
     if(transcript.length !== 0 && transcript[transcript.length-1].text !== "" && studentParamsRef.current) {
       console.log(transcript);
       getAIResponse(transcript, studentParamsRef.current).then(response => {
-        console.log("response: ", response);
+        textToSpeech(response as string);
         setTranscript((prev) => [...prev, {
             id: Date.now(),
             speaker: 'student',
@@ -126,7 +129,6 @@ print(fibonacci(5))`)
           
           setLastUserMsg(text);
         };
-        // console.log("new transcription: ", await getTranscription(completeAudioBlob));
       }
 
       recognitionRef.current.onspeechstart = () => {
@@ -148,6 +150,33 @@ const stopRecording = () => {
   console.log("stopping recording... ", mediaChunksRef.current);
   mediaRecorderRef.current?.stop();
   mediaRecorderRef.current?.stream.getTracks().forEach(track => track.stop());
+}
+
+const textToSpeech = async (text: string) => {
+  try {
+    const response = await fetch("https://api.lemonfox.ai/v1/audio/speech", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.NEXT_PUBLIC_LEMON_FOX_API_KEY}`
+      },
+      body: JSON.stringify({
+        input: text,
+        voice: "sarah",
+        response_format: "mp3"
+      })
+    })
+
+    if(response) {
+      const blob = await response.blob();
+      const audioBlobURL = URL.createObjectURL(blob);
+      const audio = new Audio();
+      audio.src = audioBlobURL;
+      audio.play();
+
+    }
+  } catch (err) {
+    console.error("Error with text to speech has occurred: ", err);
+  }
 }
 
 
