@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { Download, ThumbsUp, ThumbsDown } from "lucide-react"
+// have transcription data passed in 
 
 export default function FeedbackPage() {
   return (
@@ -12,7 +13,7 @@ export default function FeedbackPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-4xl font-bold mb-2">Session Feedback</h1>
-            <p className="text-muted-foreground">Session #1 • Intermediate • 30 minutes</p>
+            <p className="text-muted-foreground"></p>
           </div>
           <Button variant="outline">
             <Download className="w-4 h-4 mr-2" />

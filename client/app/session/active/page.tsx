@@ -27,12 +27,13 @@ type StudentParameters = {
 }
 
 export default function ActiveSessionPage() {
-  const [micOn, setMicOn] = useState(false);  // Start with mic on?
+  const [micOn, setMicOn] = useState(false);  // Start with mic off
   const [videoOn, setVideoOn] = useState(true);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [transcript, setTranscript] = useState<TranscriptMessage[]>([]);
   const [lastUserMsg, setLastUserMsg] = useState<string>("");
   const [isTalking, setIsTalking] = useState<boolean>(false);
+  const [userId, setUserId] = useState<string>("");
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediaChunksRef = useRef<Array<Blob>>([]);
@@ -74,6 +75,17 @@ print(fibonacci(5))`)
       issue: queryParams.get('issue') ?? "Error, tell user"
       }
   }, [])
+
+  // see if userId is loaded in 
+  useEffect(() => {
+  const storedUserId = localStorage.getItem('userId');
+  if (storedUserId) {
+    setUserId(storedUserId);
+    console.log('UserId loaded:', storedUserId);
+  } else {
+    console.warn('No userId found in localStorage');
+  }
+}, [])
 
   useEffect(() => {
     if(transcript.length !== 0 && transcript[transcript.length-1].text !== "" && studentParamsRef.current) {
@@ -118,18 +130,24 @@ print(fibonacci(5))`)
         console.log("Recorder stopped. Sending chunks...");
         const completeAudioBlob = new Blob(mediaChunksRef.current, {type: 'audio/webm'});
         mediaChunksRef.current = [];
-        const text = await getTranscription(completeAudioBlob);
-        if(transcript) {
-          setTranscript((prev) => [...prev, {
-            id: Date.now(),
-            speaker: 'tutor',
-            text,
-            timestamp: formatTime(elapsedTimeRef.current),
-          }])
-          
-          setLastUserMsg(text);
-        };
-      }
+
+        console.log("Current userId:", userId);
+
+        try {
+          const text = await getTranscription(completeAudioBlob, userId)
+          if (text && text.trim() !== "") {
+            setTranscript((prev) => [...prev, {
+              id: Date.now(),
+              speaker: 'tutor',
+              text,
+              timestamp: formatTime(elapsedTimeRef.current),
+            }])
+            setLastUserMsg(text)
+          }
+        } catch (error) {
+          console.error("Transcription error:", error)
+        }
+      }; 
 
       recognitionRef.current.onspeechstart = () => {
         setIsTalking(true);
@@ -184,11 +202,14 @@ const textToSpeech = async (text: string) => {
   // useEffect(() => {
   //   transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" })
   // }, [transcript])
+  // i dont like this atm i think its annoying but im open to changing/fixing it and putting back later
 
-  const getTranscription = async (audioData : Blob) => {
-    const audioForm = new FormData();
+  const getTranscription = async (audioData : Blob, userId: string) => {
+    try {
+      const audioForm = new FormData();
 
     audioForm.append('audio', audioData, 'recording.wav');
+    audioForm.append('userId', userId);
 
     const response = await fetch('http://localhost:5000/transcribe', {
       method: 'POST',
@@ -202,7 +223,12 @@ const textToSpeech = async (text: string) => {
     const data = await response.json();
 
     return data.transcript;
+  } catch (error) {
+    console.error("Error with getting transcription: ", error);
+    throw error;
   }
+}
+
 
 
   // Toggle mic on/off
