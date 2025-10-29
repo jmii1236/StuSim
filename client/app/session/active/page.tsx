@@ -256,7 +256,7 @@ const textToSpeech = async (text: string) => {
         </div>
 
         <div className={`grid ${studentParamsRef.current?.codeToggle ? "lg:grid-cols-2" : "lg-grid-cols-1"} gap-6`}>
-          <div className={`${studentParamsRef.current?.codeToggle ? "" : "space-y-6 grid lg:grid-cols-2 gap-6"}`}>
+          <div className={`${studentParamsRef.current?.codeToggle ? "" : "grid lg:grid-cols-2 gap-6"} space-y-6`}>
             <Card className="bg-muted/30">
               <CardContent className="p-6">
                 <div className={`aspect-video bg-muted rounded-lg border-4 ${isTalking ? "border-emerald-400" : ""} flex items-center justify-center mb-4`}>
