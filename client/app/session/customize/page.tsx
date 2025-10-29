@@ -9,12 +9,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { Shuffle } from "lucide-react"
+import { ToggleSlider } from "@/components/ui/toggle-slider";
 
 export default function CustomizeSessionPage() {
   const [csBackground, setCsBackground] = useState("")
   const [personality, setPersonality] = useState("")
   const [difficulty, setDifficulty] = useState("")
   const [issue, setIssue] = useState("")
+  const [codeToggle, setCodeToggle] = useState(false);
+  const [codeLanguage, setCodeLangauge] = useState("Javascript");
 
   const randomizeSettings = () => {
     const backgrounds = ["beginner", "intermediate", "advanced"]
@@ -32,6 +35,12 @@ export default function CustomizeSessionPage() {
     setPersonality(personalities[Math.floor(Math.random() * personalities.length)])
     setDifficulty(difficulties[Math.floor(Math.random() * difficulties.length)])
     setIssue(issues[Math.floor(Math.random() * issues.length)])
+  }
+
+  console.log(codeToggle);
+
+  function ToggleFunction() {
+    setCodeToggle(prev => !prev);
   }
 
   return (
@@ -106,8 +115,28 @@ export default function CustomizeSessionPage() {
               />
             </div>
 
+            <div className="space-y-2">
+              <Label>Has Coding Questions
+                <ToggleSlider onChecked={ToggleFunction} isChecked={codeToggle} tooltip={"Toggle to allow coding questions with editor."} />     
+                {codeToggle ? 
+                  <Select value={codeLanguage} onValueChange={setCodeLangauge}>
+                    <SelectTrigger id="codeLanguage">
+                      <SelectValue placeholder="Select Coding Language" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Javascript">Javascript</SelectItem>
+                      <SelectItem value="Python">Python</SelectItem>
+                      <SelectItem value="C++">C++</SelectItem>
+                      <SelectItem value="C#">C#</SelectItem>
+                      <SelectItem value="Java">Java</SelectItem>
+                    </SelectContent> 
+                  </Select> : null}
+                    
+              </Label>
+            </div>
+
             <Button className="w-full" size="lg" asChild>
-              <Link href={{pathname: "/session/active", query: {csBackground: csBackground, personality: personality, difficulty: difficulty, issue: issue}}}>Start Session</Link>
+              <Link href={{pathname: "/session/active", query: {csBackground: csBackground, personality: personality, difficulty: difficulty, issue: issue, codeToggle: codeToggle, codeLanguage: codeLanguage}}}>Start Session</Link>
             </Button>
           </CardContent>
         </Card>
