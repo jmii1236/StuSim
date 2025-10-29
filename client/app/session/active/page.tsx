@@ -255,8 +255,8 @@ const textToSpeech = async (text: string) => {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6">
-          <div className="space-y-6">
+        <div className={`grid ${studentParamsRef.current?.codeToggle ? "lg:grid-cols-2" : "lg-grid-cols-1"} gap-6`}>
+          <div className={`${studentParamsRef.current?.codeToggle ? "" : "space-y-6 grid lg:grid-cols-2 gap-6"}`}>
             <Card className="bg-muted/30">
               <CardContent className="p-6">
                 <div className={`aspect-video bg-muted rounded-lg border-4 ${isTalking ? "border-emerald-400" : ""} flex items-center justify-center mb-4`}>
@@ -321,7 +321,7 @@ const textToSpeech = async (text: string) => {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className={`${studentParamsRef.current?.codeToggle ? "" : "col-start-1 col-span-2"}`}>
               <CardHeader>
                 <CardTitle>Session Notes</CardTitle>
               </CardHeader>
@@ -330,13 +330,13 @@ const textToSpeech = async (text: string) => {
               </CardContent>
             </Card>
           </div>
-
-          <Card>
+          
+          {studentParamsRef.current?.codeToggle ? <Card>
             <CardHeader>
               <CardTitle>Code Editor</CardTitle>
             </CardHeader>
               <Editor defaultLanguage={studentParamsRef?.current?.codeLanguage ?? "Javascript"} defaultValue="// code loading here..." value={code} />
-          </Card>
+          </Card> : null}
         </div>
       </div>
     </div>
