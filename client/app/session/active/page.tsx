@@ -11,6 +11,7 @@ import { createWriteStream } from "fs";
 import { Readable } from "stream";
 import { finished } from "stream/promises";
 import getAIResponse from '../../../services/aiCalls.js';
+import { Editor } from '@monaco-editor/react';
 
 type TranscriptMessage = {
   id: number
@@ -23,7 +24,9 @@ type StudentParameters = {
     csBackground: string,
     personality: string,
     difficulty: string,
-    issue: string
+    issue: string,
+    codeToggle: boolean,
+    codeLanguage: string
 }
 
 export default function ActiveSessionPage() {
@@ -43,14 +46,7 @@ export default function ActiveSessionPage() {
   const recognitionRef = useRef<any>(null);
 
 
-  const [code, setCode] = useState(`def fibonacci(n):
-    if n <= 1:
-        return n
-    return fibonacci(n-1) + fibonacci(n-2)
-
-# Student is trying to understand recursion
-print(fibonacci(5))`)
-
+  const [code, setCode] = useState('')
 
   // Timer
   useEffect(() => {
@@ -72,7 +68,9 @@ print(fibonacci(5))`)
       csBackground: queryParams.get('csBackground') ?? "Error, tell user",
       personality: queryParams.get('personality') ?? "Error, tell user",
       difficulty: queryParams.get('difficulty') ?? "Error, tell user",
-      issue: queryParams.get('issue') ?? "Error, tell user"
+      issue: queryParams.get('issue') ?? "Error, tell user",
+      codeToggle: (queryParams.get("codeToggle") === 'true'),
+      codeLanguage: queryParams.get('codeLanguage') ?? "Error, tell user",
       }
   }, [])
 
@@ -90,15 +88,21 @@ print(fibonacci(5))`)
   useEffect(() => {
     if(transcript.length !== 0 && transcript[transcript.length-1].text !== "" && studentParamsRef.current) {
       console.log(transcript);
-      getAIResponse(transcript, studentParamsRef.current).then(response => {
-        textToSpeech(response as string);
-        setTranscript((prev) => [...prev, {
-            id: Date.now(),
-            speaker: 'student',
-            text: response as string,
-            timestamp: formatTime(elapsedTimeRef.current),
+      getAIResponse(transcript, studentParamsRef.current, code).then(response => {
+        if(response) {
+          const splitResponse = response?.split('$');
+          textToSpeech(splitResponse[0] as string);
+          if(splitResponse)
+            setTranscript((prev) => [...prev, {
+                id: Date.now(),
+                speaker: 'student',
+                text: splitResponse[0],
+                timestamp: formatTime(elapsedTimeRef.current),
+            }
+          ])
+          if(splitResponse.length > 1) setCode(splitResponse[1])
         }
-      ])
+
       }).catch(error => {
         console.error("Error found: ", error);
       })
@@ -277,8 +281,8 @@ const textToSpeech = async (text: string) => {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6">
-          <div className="space-y-6">
+        <div className={`grid ${studentParamsRef.current?.codeToggle ? "lg:grid-cols-2" : "lg-grid-cols-1"} gap-6`}>
+          <div className={`${studentParamsRef.current?.codeToggle ? "" : "grid lg:grid-cols-2 gap-6"} space-y-6`}>
             <Card className="bg-muted/30">
               <CardContent className="p-6">
                 <div className={`aspect-video bg-muted rounded-lg border-4 ${isTalking ? "border-emerald-400" : ""} flex items-center justify-center mb-4`}>
@@ -343,7 +347,7 @@ const textToSpeech = async (text: string) => {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className={`${studentParamsRef.current?.codeToggle ? "" : "col-start-1 col-span-2"}`}>
               <CardHeader>
                 <CardTitle>Session Notes</CardTitle>
               </CardHeader>
@@ -352,20 +356,13 @@ const textToSpeech = async (text: string) => {
               </CardContent>
             </Card>
           </div>
-
-          <Card>
+          
+          {studentParamsRef.current?.codeToggle ? <Card>
             <CardHeader>
               <CardTitle>Code Editor</CardTitle>
             </CardHeader>
-            <CardContent>
-              <Textarea
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                className="bg-muted rounded-lg p-4 font-mono text-sm h-[600px] resize-none"
-                spellCheck={false}
-              />
-            </CardContent>
-          </Card>
+              <Editor defaultLanguage={studentParamsRef?.current?.codeLanguage ?? "Javascript"} defaultValue="// code loading here..." value={code} />
+          </Card> : null}
         </div>
       </div>
     </div>

@@ -21,6 +21,7 @@
   "dependencies": {
     "@deepgram/sdk": "^4.11.2",
     "@google/genai": "^1.24.0",
+    "@monaco-editor/react": "^4.8.0-rc.2",
     "@radix-ui/react-label": "^2.1.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
