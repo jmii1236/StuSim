@@ -6,8 +6,12 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Mic, MicOff, Video, VideoOff, PhoneOff } from "lucide-react"
-import { useSearchParams } from 'next/navigation'
-import getAIResponse from '../../../services/aiCalls.js'
+import { useSearchParams } from 'next/navigation';
+import { createWriteStream } from "fs";
+import { Readable } from "stream";
+import { finished } from "stream/promises";
+import getAIResponse from '../../../services/aiCalls.js';
+import { Editor } from '@monaco-editor/react';
 
 type TranscriptMessage = {
   id: number
@@ -17,10 +21,12 @@ type TranscriptMessage = {
 }
 
 type StudentParameters = {
-  csBackground: string
-  personality: string
-  difficulty: string
-  issue: string
+    csBackground: string,
+    personality: string,
+    difficulty: string,
+    issue: string,
+    codeToggle: boolean,
+    codeLanguage: string
 }
 
 export default function ActiveSessionPage() {
@@ -45,19 +51,12 @@ export default function ActiveSessionPage() {
   const recognitionRef = useRef<any>(null)
   const sessionIdRef = useRef<string>("")
 
-  const [code, setCode] = useState(`def fibonacci(n):
-    if n <= 1:
-        return n
-    return fibonacci(n-1) + fibonacci(n-2)
-
-# Student is trying to understand recursion
-print(fibonacci(5))`)
-
   const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
   if (API_URL === undefined) {
     throw new Error("API URL is not defined in environment variables")
   }
+  const [code, setCode] = useState('')
 
   // Timer
   useEffect(() => {
@@ -72,58 +71,61 @@ print(fibonacci(5))`)
   }, [])
 
   // Load query params
-  const queryParams = useSearchParams()
-  useEffect(() => {
-    studentParamsRef.current = {
-      csBackground: queryParams.get('csBackground') ?? "Error, tell user",
-      personality: queryParams.get('personality') ?? "Error, tell user",
-      difficulty: queryParams.get('difficulty') ?? "Error, tell user",
-      issue: queryParams.get('issue') ?? "Error, tell user"
-    }
-  }, [queryParams])
-
-  // Load userId and start session automatically
-  useEffect(() => {
-    const storedUserId = localStorage.getItem('userId')
-    if (storedUserId) {
-      setUserId(storedUserId)
-      console.log('UserId loaded:', storedUserId)
-      
-      // Auto-start transcription session when page loads
-      startTranscription(storedUserId).then(newSessionId => {
-        if (newSessionId) {
-          setSessionId(newSessionId)
-          sessionIdRef.current = newSessionId
-          console.log("Session auto-started with sessionId:", newSessionId)
-        }
-      })
-    } else {
-      console.warn('No userId found in localStorage')
-    }
-  }, [])
-
-  const startTranscription = async (uid: string): Promise<string | null> => {
-    try {
-      const response = await fetch(`${API_URL}/api/transcripts/start`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          userId: uid, 
-          studentParameters: studentParamsRef.current 
-        })
-      })
-
-      const data = await response.json()
-      if (data.success) {
-        console.log("Transcript started: ", data.sessionId)
-        return data.sessionId
-      }
-      return null
-    } catch (err) {
-      console.error("Error starting transcription session: ", err)
-      return null
-    }
+  // Load query params
+const queryParams = useSearchParams()
+useEffect(() => {
+  studentParamsRef.current = {
+    csBackground: queryParams.get('csBackground') ?? "Error, tell user",
+    personality: queryParams.get('personality') ?? "Error, tell user",
+    difficulty: queryParams.get('difficulty') ?? "Error, tell user",
+    issue: queryParams.get('issue') ?? "Error, tell user",
+    codeToggle: (queryParams.get("codeToggle") === 'true'),
+    codeLanguage: queryParams.get('codeLanguage') ?? "Error, tell user",
   }
+}, [])
+
+// Load userId and start session automatically
+useEffect(() => {
+  const storedUserId = localStorage.getItem('userId')
+  if (storedUserId) {
+    setUserId(storedUserId)
+    console.log('UserId loaded:', storedUserId)
+    
+    // Auto-start transcription session when page loads
+    startTranscription(storedUserId).then(newSessionId => {
+      if (newSessionId) {
+        setSessionId(newSessionId)
+        sessionIdRef.current = newSessionId
+        console.log("Session auto-started with sessionId:", newSessionId)
+      }
+    })
+  } else {
+    console.warn('No userId found in localStorage')
+  }
+}, [])
+
+const startTranscription = async (uid: string): Promise<string | null> => {
+  try {
+    const response = await fetch(`${API_URL}/api/transcripts/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        userId: uid, 
+        studentParameters: studentParamsRef.current 
+      })
+    })
+
+    const data = await response.json()
+    if (data.success) {
+      console.log("Transcript started: ", data.sessionId)
+      return data.sessionId
+    }
+    return null
+  } catch (err) {
+    console.error("Error starting transcription session: ", err)
+    return null
+  }
+}
 
   const saveMessageToDB = async (speaker: "tutor" | "student", text: string, timestamp: string) => {
     const currentSessionId = sessionIdRef.current || sessionId
@@ -409,8 +411,8 @@ print(fibonacci(5))`)
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6">
-          <div className="space-y-6">
+        <div className={`grid ${studentParamsRef.current?.codeToggle ? "lg:grid-cols-2" : "lg-grid-cols-1"} gap-6`}>
+          <div className={`${studentParamsRef.current?.codeToggle ? "" : "grid lg:grid-cols-2 gap-6"} space-y-6`}>
             <Card className="bg-muted/30">
               <CardContent className="p-6">
                 <div className={`aspect-video bg-muted rounded-lg border-4 ${isTalking ? "border-emerald-400" : ""} flex items-center justify-center mb-4`}>
@@ -478,7 +480,7 @@ print(fibonacci(5))`)
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className={`${studentParamsRef.current?.codeToggle ? "" : "col-start-1 col-span-2"}`}>
               <CardHeader>
                 <CardTitle>Session Notes</CardTitle>
               </CardHeader>
@@ -487,20 +489,13 @@ print(fibonacci(5))`)
               </CardContent>
             </Card>
           </div>
-
-          <Card>
+          
+          {studentParamsRef.current?.codeToggle ? <Card>
             <CardHeader>
               <CardTitle>Code Editor</CardTitle>
             </CardHeader>
-            <CardContent>
-              <Textarea
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                className="bg-muted rounded-lg p-4 font-mono text-sm h-[600px] resize-none"
-                spellCheck={false}
-              />
-            </CardContent>
-          </Card>
+              <Editor defaultLanguage={studentParamsRef?.current?.codeLanguage ?? "Javascript"} defaultValue="// code loading here..." value={code} />
+          </Card> : null}
         </div>
       </div>
     </div>
