@@ -46,10 +46,16 @@ export default function ActiveSessionPage() {
   const recognitionRef = useRef<any>(null);
 
 
-  const [code, setCode] = useState('')
+  const [code, setCode] = useState('');
 
   // Timer
   useEffect(() => {
+    getEvaluation().then(results => {
+      console.log(results.output_text);
+    })
+    .catch(error => {
+      console.log("Error: ", error);
+    })
     const interval = setInterval(() => {
       setElapsedTime((prev) => {
         const newTime = prev + 1
@@ -168,38 +174,39 @@ export default function ActiveSessionPage() {
     }
   }
 
-const stopRecording = () => {
-  console.log("stopping recording... ", mediaChunksRef.current);
-  mediaRecorderRef.current?.stop();
-  mediaRecorderRef.current?.stream.getTracks().forEach(track => track.stop());
-}
-
-const textToSpeech = async (text: string) => {
-  try {
-    const response = await fetch("https://api.lemonfox.ai/v1/audio/speech", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.NEXT_PUBLIC_LEMON_FOX_API_KEY}`
-      },
-      body: JSON.stringify({
-        input: text,
-        voice: "sarah",
-        response_format: "mp3"
-      })
-    })
-
-    if(response) {
-      const blob = await response.blob();
-      const audioBlobURL = URL.createObjectURL(blob);
-      const audio = new Audio();
-      audio.src = audioBlobURL;
-      audio.play();
-
-    }
-  } catch (err) {
-    console.error("Error with text to speech has occurred: ", err);
+  const stopRecording = () => {
+    console.log("stopping recording... ", mediaChunksRef.current);
+    mediaRecorderRef.current?.stop();
+    mediaRecorderRef.current?.stream.getTracks().forEach(track => track.stop());
   }
-}
+
+  const textToSpeech = async (text: string) => {
+    try {
+      const response = await fetch("https://api.lemonfox.ai/v1/audio/speech", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.NEXT_PUBLIC_LEMON_FOX_API_KEY}`
+        },
+        body: JSON.stringify({
+          input: text,
+          voice: "sarah",
+          response_format: "mp3"
+        })
+      })
+
+      if(response) {
+        const blob = await response.blob();
+        const audioBlobURL = URL.createObjectURL(blob);
+        const audio = new Audio();
+        audio.src = audioBlobURL;
+        audio.play();
+
+      }
+    } catch (err) {
+      console.error("Error with text to speech has occurred: ", err);
+    }
+  }
+
 
 
   // Auto-scroll transcript
@@ -248,6 +255,15 @@ const textToSpeech = async (text: string) => {
     setMicOn(!micOn)
   }
 
+  const getEvaluation = async () => {
+    const response = await fetch('http://localhost:5000/evaluate');
+    if(!response.ok) {
+      throw new Error(`Error with response: ${response.status}`);
+    }
+    const data = await response.json();
+    return data;
+  }
+
   function StartRecognition() {
     if (typeof window !== "undefined") {
           console.log("recognition has started...");
@@ -281,7 +297,7 @@ const textToSpeech = async (text: string) => {
           </div>
         </div>
 
-        <div className={`grid ${studentParamsRef.current?.codeToggle ? "lg:grid-cols-2" : "lg-grid-cols-1"} gap-6`}>
+        <div className={`grid ${studentParamsRef.current?.codeToggle ? "lg:grid-cols-2 lg:grid-rows-1" : "lg-grid-cols-1"} gap-6`}>
           <div className={`${studentParamsRef.current?.codeToggle ? "" : "grid lg:grid-cols-2 gap-6"} space-y-6`}>
             <Card className="bg-muted/30">
               <CardContent className="p-6">
@@ -357,7 +373,7 @@ const textToSpeech = async (text: string) => {
             </Card>
           </div>
           
-          {studentParamsRef.current?.codeToggle ? <Card>
+           {studentParamsRef.current?.codeToggle ? <Card className="col-start-2 row-span-1">
             <CardHeader>
               <CardTitle>Code Editor</CardTitle>
             </CardHeader>
