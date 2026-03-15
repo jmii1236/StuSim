@@ -14,15 +14,16 @@ import { ToggleSlider } from "@/components/ui/toggle-slider";
 export default function CustomizeSessionPage() {
   const [csBackground, setCsBackground] = useState("")
   const [personality, setPersonality] = useState("")
-  const [difficulty, setDifficulty] = useState("")
+  const [engagementLevel, setEngagementLevel] = useState("")
   const [issue, setIssue] = useState("")
   const [codeToggle, setCodeToggle] = useState(false);
-  const [codeLanguage, setCodeLangauge] = useState("Javascript");
+  const [codeLanguage, setCodeLangauge] = useState("C++");
+  const [usePersona, setUsePersona] = useState("");
 
   const randomizeSettings = () => {
     const backgrounds = ["beginner", "intermediate", "advanced"]
-    const personalities = ["engaged", "shy", "frustrated", "confident"]
-    const difficulties = ["easy", "medium", "hard"]
+    const personalities = ["engaged", "shy", "frustrated"]
+    const engagementLevels = ["low", "medium", "high"]
     const issues = [
       "Debugging a for loop that's not iterating correctly",
       "Understanding how recursion works with base cases",
@@ -33,11 +34,40 @@ export default function CustomizeSessionPage() {
 
     setCsBackground(backgrounds[Math.floor(Math.random() * backgrounds.length)])
     setPersonality(personalities[Math.floor(Math.random() * personalities.length)])
-    setDifficulty(difficulties[Math.floor(Math.random() * difficulties.length)])
+    setEngagementLevel(engagementLevels[Math.floor(Math.random() * engagementLevels.length)])
     setIssue(issues[Math.floor(Math.random() * issues.length)])
+    setUsePersona("")
   }
 
-  console.log(codeToggle);
+  const loadMiddleMobolaji = () => {
+    setCsBackground("intermediate")
+    setPersonality("shy")
+    setEngagementLevel("medium")
+    setIssue("Reversing a linked list using recursion - struggling with base cases and pointer assignments")
+    setCodeToggle(true)
+    setCodeLangauge("C++")
+    setUsePersona("mobolaji")
+  }
+
+  const loadStriverSatya = () => {
+    setCsBackground("intermediate")
+    setPersonality("engaged")
+    setEngagementLevel("high")
+    setIssue("Reversing a linked list using recursion - close to solution but making a small mistake with pointer reassignment")
+    setCodeToggle(true)
+    setCodeLangauge("C++")
+    setUsePersona("satya")
+  }
+
+  const loadAloofAsh = () => {
+    setCsBackground("intermediate")
+    setPersonality("frustrated")
+    setEngagementLevel("low")
+    setIssue("Reversing a linked list using recursion - missing fundamental understanding of recursion and base cases")
+    setCodeToggle(true)
+    setCodeLangauge("C++")
+    setUsePersona("ash")
+  }
 
   function ToggleFunction() {
     setCodeToggle(prev => !prev);
@@ -68,9 +98,9 @@ export default function CustomizeSessionPage() {
                   <SelectValue placeholder="Select background level" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="beginner">Beginner (CS1)</SelectItem>
-                  <SelectItem value="intermediate">Intermediate (CS2)</SelectItem>
-                  <SelectItem value="advanced">Advanced (Data Structures)</SelectItem>
+                  <SelectItem value="beginner">Beginner - Low debugging expertise</SelectItem>
+                  <SelectItem value="intermediate">Intermediate - Medium debugging expertise</SelectItem>
+                  <SelectItem value="advanced">Advanced - High debugging expertise</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -82,24 +112,23 @@ export default function CustomizeSessionPage() {
                   <SelectValue placeholder="Select personality type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="engaged">Engaged & Curious</SelectItem>
-                  <SelectItem value="shy">Shy & Reserved</SelectItem>
-                  <SelectItem value="frustrated">Frustrated & Confused</SelectItem>
-                  <SelectItem value="confident">Overconfident</SelectItem>
+                  <SelectItem value="engaged">Engaged & Curious - Growth Mindset</SelectItem>
+                  <SelectItem value="shy">Shy & Reserved / Overconfident - Mixed Mindset</SelectItem>
+                  <SelectItem value="frustrated">Frustrated & Confused - Fixed Mindset</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="difficulty">Difficulty Level</Label>
-              <Select value={difficulty} onValueChange={setDifficulty}>
-                <SelectTrigger id="difficulty">
-                  <SelectValue placeholder="Select difficulty" />
+              <Label htmlFor="engagement-level">Student Engagement Level</Label>
+              <Select value={engagementLevel} onValueChange={setEngagementLevel}>
+                <SelectTrigger id="engagement-level">
+                  <SelectValue placeholder="Select engagement level" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="easy">Easy</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="hard">Hard</SelectItem>
+                  <SelectItem value="low">Low interest in CS</SelectItem>
+                  <SelectItem value="medium">Medium interest in CS</SelectItem>
+                  <SelectItem value="high">High interest in CS</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -129,14 +158,57 @@ export default function CustomizeSessionPage() {
                       <SelectItem value="C++">C++</SelectItem>
                       <SelectItem value="C#">C#</SelectItem>
                       <SelectItem value="Java">Java</SelectItem>
+                      <SelectItem value="Go">Go</SelectItem>
+                      <SelectItem value="Rust">Rust</SelectItem>
                     </SelectContent> 
                   </Select> : null}
                     
               </Label>
             </div>
 
+            <div className="border-t pt-6 space-y-3">
+              <Label className="text-base">Pre-set Student Personas</Label>
+              <p className="text-sm text-muted-foreground">Quick-load a researched student persona with preset characteristics</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <Button 
+                  variant="outline" 
+                  onClick={loadMiddleMobolaji}
+                  className={usePersona === "mobolaji" ? "border-primary bg-primary/10" : ""}
+                >
+                  Middle Mobolaji
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={loadStriverSatya}
+                  className={usePersona === "satya" ? "border-primary bg-primary/10" : ""}
+                >
+                  Striver Satya
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={loadAloofAsh}
+                  className={usePersona === "ash" ? "border-primary bg-primary/10" : ""}
+                >
+                  Aloof Ash
+                </Button>
+              </div>
+            </div>
+
             <Button className="w-full" size="lg" asChild>
-              <Link href={{pathname: "/session/active", query: {csBackground: csBackground, personality: personality, difficulty: difficulty, issue: issue, codeToggle: codeToggle, codeLanguage: codeLanguage}}}>Start Session</Link>
+              <Link href={{
+                pathname: "/session/active", 
+                query: {
+                  csBackground: csBackground, 
+                  personality: personality, 
+                  engagementLevel: engagementLevel,
+                  issue: issue, 
+                  codeToggle: codeToggle, 
+                  codeLanguage: codeLanguage,
+                  usePersona: usePersona
+                }
+              }}>
+                Start Session
+              </Link>
             </Button>
           </CardContent>
         </Card>

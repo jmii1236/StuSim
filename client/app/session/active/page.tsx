@@ -179,7 +179,7 @@ const textToSpeech = async (text: string) => {
     const response = await fetch("https://api.lemonfox.ai/v1/audio/speech", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${process.env.NEXT_PUBLIC_LEMON_FOX_API_KEY}`
+        "Authorization": `Bearer ${process.env.NEXT_PUBLIC_LEMON_FOX_API_KEY}`,
       },
       body: JSON.stringify({
         input: text,
@@ -203,7 +203,7 @@ const textToSpeech = async (text: string) => {
 
 
   // Auto-scroll transcript
-  // useEffect(() => {
+  // useEf123612fect(() => {
   //   transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" })
   // }, [transcript])
   // i dont like this atm i think its annoying but im open to changing/fixing it and putting back later
