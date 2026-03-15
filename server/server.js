@@ -1,13 +1,13 @@
+const dotenv = require('dotenv');
+dotenv.config();
 const express = require('express');
 const cors = require('cors');
-const dotenv = require('dotenv');
 const multer = require('multer');
 const { createClient } = require('@deepgram/sdk');
-const connectDB = require('./config/db');
 const Transcript = require('./models/transcript');
 const User = require('./models/user');
 
-dotenv.config();
+const connectDB = require('./config/db');
 
 const app = express();
 const upload = multer();
