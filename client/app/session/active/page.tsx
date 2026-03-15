@@ -175,42 +175,39 @@ export default function ActiveSessionPage() {
   }
 
   const stopRecording = () => {
-    console.log("stopping recording... ", mediaChunksRef.current);
-    mediaRecorderRef.current?.stop();
-    mediaRecorderRef.current?.stream.getTracks().forEach(track => track.stop());
-  }
+  console.log("stopping recording... ", mediaChunksRef.current);
+  mediaRecorderRef.current?.stop();
+  mediaRecorderRef.current?.stream.getTracks().forEach(track => track.stop());
+}
 
-  const textToSpeech = async (text: string) => {
-    try {
-      const response = await fetch("https://api.lemonfox.ai/v1/audio/speech", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${process.env.NEXT_PUBLIC_LEMON_FOX_API_KEY}`
-        },
-        body: JSON.stringify({
-          input: text,
-          voice: "sarah",
-          response_format: "mp3"
-        })
+const textToSpeech = async (text: string) => {
+  try {
+    const response = await fetch("https://api.lemonfox.ai/v1/audio/speech", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.NEXT_PUBLIC_LEMON_FOX_API_KEY}`,
+      },
+      body: JSON.stringify({
+        input: text,
+        voice: "sarah",
+        response_format: "mp3"
       })
+    })
 
-      if(response) {
-        const blob = await response.blob();
-        const audioBlobURL = URL.createObjectURL(blob);
-        const audio = new Audio();
-        audio.src = audioBlobURL;
-        audio.play();
-
-      }
-    } catch (err) {
-      console.error("Error with text to speech has occurred: ", err);
+    if (response) {
+      const blob = await response.blob();
+      const audioBlobURL = URL.createObjectURL(blob);
+      const audio = new Audio();
+      audio.src = audioBlobURL;
+      audio.play();
     }
+  } catch (err) {
+    console.error("Error with text to speech has occurred: ", err);
   }
-
-
+}
 
   // Auto-scroll transcript
-  // useEffect(() => {
+  // useEf123612fect(() => {
   //   transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" })
   // }, [transcript])
   // i dont like this atm i think its annoying but im open to changing/fixing it and putting back later
