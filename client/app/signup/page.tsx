@@ -50,6 +50,8 @@ export default function SignupPage() {
       })
 
       const data = await response.json()
+      console.log('Register response:', data)
+      console.log('userId being stored:', data.userId) 
 
       if (!response.ok) {
         throw new Error(data.error || 'Registration failed')
