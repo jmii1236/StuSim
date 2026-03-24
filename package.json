@@ -23,6 +23,7 @@
     "@google/genai": "^1.24.0",
     "@monaco-editor/react": "^4.8.0-rc.2",
     "@radix-ui/react-label": "^2.1.7",
+    "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
