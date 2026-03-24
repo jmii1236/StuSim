@@ -44,10 +44,7 @@ router.post('/register', async (req, res) => {
       message: 'User created successfully',
       userId: user._id.toString(),
     });
-    
-    // Don't return the password in the response
-    const { password: _, ...userWithoutPassword } = newUser.toObject();
-    res.status(201).json(userWithoutPassword);
+  
 
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -74,7 +71,7 @@ router.post('/login', async (req, res) => {
     // Return user info (you can add JWT here later)
     res.json({
       message: 'Login successful',
-      _id: user._id,
+      userId: user._id.toString(),
       name: user.name,
       email: user.email,
       taType: user.taType,
